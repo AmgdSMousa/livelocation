@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>Live Location</title>
+</head>
+<body>
+
+<h2>📍 مشاركة الموقع المباشر</h2>
+<button onclick="start()">ابدأ مشاركة الموقع</button>
+<pre id="out"></pre>
+
+<script>
+function start() {
+  if (!navigator.geolocation) {
+    alert("GPS غير مدعوم");
+    return;
+  }
+
+  navigator.geolocation.watchPosition(
+    pos => {
+      const data = {
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+        accuracy: pos.coords.accuracy
+      };
+
+      document.getElementById("out").textContent =
+        JSON.stringify(data, null, 2);
+
+      fetch("/api/location", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(data)
+      })
+      .then(r => r.json())
+      .then(d => console.log("Google Maps:", d.maps));
+    },
+    err => alert(err.message),
+    { enableHighAccuracy: true }
+  );
+}
+</script>
+
+</body>
+</html>
