@@ -1,21 +1,28 @@
 const express = require("express");
-const app = express();
+const path = require("path");
 
+const app = express();
 app.use(express.json());
 
-// API تستقبل اللوكيشن
+// يخدم ملفات HTML
+app.use(express.static(__dirname));
+
+// API
 app.post("/api/location", (req, res) => {
   const { lat, lng, accuracy } = req.body;
 
-  console.log("LIVE LOCATION:");
-  console.log(`Lat: ${lat}, Lng: ${lng}`);
-  console.log(`Accuracy: ${accuracy}m`);
+  console.log("LIVE LOCATION");
+  console.log(lat, lng, accuracy);
 
   const maps = `https://www.google.com/maps?q=${lat},${lng}`;
   res.json({ maps });
 });
 
-// Render يستخدم PORT تلقائي
+// fallback
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("Server running on port", PORT);
