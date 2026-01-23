@@ -2,67 +2,129 @@
 <html lang="ar">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
   <title>Live Location</title>
+
   <style>
-    body { font-family: Arial; text-align: center; }
-    #map { width: 100%; height: 400px; margin-top: 15px; }
-    #info { margin-top: 10px; }
+    :root {
+      --primary:#0d6efd;
+      --bg:#0f1220;
+      --card:#161a2e;
+      --text:#ffffff;
+      --muted:#9aa0ff;
+      --warn:#ffb703;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Arial;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #0d6efd, #6f42c1);
+      text-align: center;
+      font-weight: bold;
+    }
+
+    #map {
+      width: 100%;
+      height: calc(100vh - 180px);
+    }
+
+    .panel {
+      padding: 12px;
+      background: var(--card);
+      border-top-left-radius: 16px;
+      border-top-right-radius: 16px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
+      border: none;
+      border-radius: 12px;
+      background: var(--primary);
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .btn:active { opacity: 0.85; }
+
+    .info {
+      margin-top: 10px;
+      font-size: 14px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .warn {
+      color: var(--warn);
+      margin-top: 6px;
+      font-size: 13px;
+    }
   </style>
 </head>
+
 <body>
 
-<h2>📍 الموقع المباشر</h2>
-<button onclick="start()">ابدأ مشاركة الموقع</button>
+<header>📍 مشاركة الموقع المباشر</header>
 
 <div id="map"></div>
-<div id="info"></div>
+
+<div class="panel">
+  <button class="btn" onclick="start()">ابدأ مشاركة الموقع</button>
+  <div id="info" class="info"></div>
+</div>
 
 <script>
 let map, marker, watchId;
 const sessionId = Math.random().toString(36).substring(2);
 
-// تهيئة الخريطة لأول مرة
 function initMap(lat, lng) {
   map = new google.maps.Map(document.getElementById("map"), {
     center: { lat, lng },
     zoom: 17,
-    mapTypeId: "roadmap"
+    mapTypeId: "roadmap",
+    disableDefaultUI: true,
+    zoomControl: true
   });
 
   marker = new google.maps.Marker({
     position: { lat, lng },
-    map: map,
-    title: "موقعك الحالي"
+    map,
+    title: "موقعك"
   });
 }
 
-// تشغيل تتبع الـ GPS
 function start() {
   if (!navigator.geolocation) {
-    alert("المتصفح لا يدعم GPS");
+    alert("GPS غير مدعوم");
     return;
   }
 
   watchId = navigator.geolocation.watchPosition(
     pos => {
-      const lat = pos.coords.latitude;
-      const lng = pos.coords.longitude;
-      const accuracy = pos.coords.accuracy;
+      const { latitude:lat, longitude:lng, accuracy } = pos.coords;
 
-      document.getElementById("info").innerHTML =
-        `📏 الدقة: ${Math.round(accuracy)} متر`;
+      const info = document.getElementById("info");
+      info.innerHTML = `📏 الدقة: ${Math.round(accuracy)} متر`;
 
       if (accuracy > 100) {
-        document.getElementById("info").innerHTML +=
-          "<br>⚠️ فعّل Precise Location للحصول على دقة أفضل";
+        info.innerHTML += `<div class="warn">⚠️ فعّل Precise Location</div>`;
       }
 
-      if (!map) {
-        initMap(lat, lng);
-      } else {
-        const newPos = { lat, lng };
-        marker.setPosition(newPos);
-        map.setCenter(newPos);
+      if (!map) initMap(lat, lng);
+      else {
+        const p = { lat, lng };
+        marker.setPosition(p);
+        map.setCenter(p);
       }
 
       fetch("/api/location", {
@@ -74,14 +136,8 @@ function start() {
         body: JSON.stringify({ lat, lng, accuracy })
       });
     },
-    err => {
-      alert("لازم تسمح بمشاركة الموقع بدقة (Precise Location)");
-    },
-    {
-      enableHighAccuracy: true,
-      timeout: 15000,
-      maximumAge: 0
-    }
+    () => alert("لازم تسمح بالموقع الدقيق"),
+    { enableHighAccuracy:true, timeout:15000, maximumAge:0 }
   );
 }
 </script>

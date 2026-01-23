@@ -2,24 +2,35 @@
 <html lang="ar">
 <head>
   <meta charset="UTF-8" />
-  <title>Live Users Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Live Dashboard</title>
+
   <style>
-    html, body {
-      height: 100%;
+    body, html {
       margin: 0;
-      padding: 0;
-      font-family: Arial;
-      text-align: center;
+      height: 100%;
+      font-family: system-ui, Arial;
+      background: #0f1220;
+      color: #fff;
     }
+
+    header {
+      padding: 10px;
+      text-align: center;
+      background: #161a2e;
+      font-weight: bold;
+    }
+
     #map {
       width: 100%;
-      height: 90vh;
+      height: calc(100% - 44px);
     }
   </style>
 </head>
+
 <body>
 
-<h3>🛰️ Live Users Map</h3>
+<header>🛰️ Live Users</header>
 <div id="map"></div>
 
 <script>
@@ -28,12 +39,11 @@ const markers = {};
 const polylines = {};
 
 function initMap() {
-  console.log("Dashboard map initialized");
-
   map = new google.maps.Map(document.getElementById("map"), {
     center: { lat: 0, lng: 0 },
     zoom: 2,
-    mapTypeId: "roadmap"
+    disableDefaultUI: true,
+    zoomControl: true
   });
 
   setInterval(updateUsers, 2000);
@@ -41,43 +51,28 @@ function initMap() {
 
 function updateUsers() {
   fetch("/api/sessions")
-    .then(res => res.json())
+    .then(r => r.json())
     .then(data => {
       Object.keys(data).forEach(id => {
-        const session = data[id];
-        const lastPos = { lat: session.last.lat, lng: session.last.lng };
+        const s = data[id];
+        const pos = { lat: s.last.lat, lng: s.last.lng };
 
-        // Marker لكل مستخدم
         if (!markers[id]) {
-          markers[id] = new google.maps.Marker({
-            position: lastPos,
-            map,
-            label: "👤"
-          });
+          markers[id] = new google.maps.Marker({ position: pos, map });
         } else {
-          markers[id].setPosition(lastPos);
+          markers[id].setPosition(pos);
         }
 
-        // Path (History) لكل مستخدم
-        const path = session.history.map(p => ({
-          lat: p.lat,
-          lng: p.lng
-        }));
-
+        const path = s.history.map(p => ({ lat:p.lat, lng:p.lng }));
         if (!polylines[id]) {
           polylines[id] = new google.maps.Polyline({
-            path,
-            map,
-            strokeColor: "#FF0000",
-            strokeOpacity: 0.8,
-            strokeWeight: 2
+            path, map, strokeColor:"#0d6efd", strokeWeight:3
           });
         } else {
           polylines[id].setPath(path);
         }
       });
-    })
-    .catch(err => console.error(err));
+    });
 }
 </script>
 
