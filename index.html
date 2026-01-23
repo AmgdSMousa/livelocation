@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="ar">
 <head>
@@ -91,3 +92,99 @@ function start() {
 
 </body>
 </html>
+=======
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <title>Live Location</title>
+  <style>
+    body { font-family: Arial; text-align: center; }
+    #map { width: 100%; height: 400px; margin-top: 15px; }
+    #info { margin-top: 10px; }
+  </style>
+</head>
+<body>
+
+<h2>📍 الموقع المباشر</h2>
+<button onclick="start()">ابدأ مشاركة الموقع</button>
+
+<div id="map"></div>
+<div id="info"></div>
+
+<script>
+let map, marker, watchId;
+const sessionId = Math.random().toString(36).substring(2);
+
+// تهيئة الخريطة لأول مرة
+function initMap(lat, lng) {
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: { lat, lng },
+    zoom: 17,
+    mapTypeId: "roadmap"
+  });
+
+  marker = new google.maps.Marker({
+    position: { lat, lng },
+    map: map,
+    title: "موقعك الحالي"
+  });
+}
+
+// تشغيل تتبع الـ GPS
+function start() {
+  if (!navigator.geolocation) {
+    alert("المتصفح لا يدعم GPS");
+    return;
+  }
+
+  watchId = navigator.geolocation.watchPosition(
+    pos => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      const accuracy = pos.coords.accuracy;
+
+      document.getElementById("info").innerHTML =
+        `📏 الدقة: ${Math.round(accuracy)} متر`;
+
+      if (accuracy > 100) {
+        document.getElementById("info").innerHTML +=
+          "<br>⚠️ فعّل Precise Location للحصول على دقة أفضل";
+      }
+
+      if (!map) {
+        initMap(lat, lng);
+      } else {
+        const newPos = { lat, lng };
+        marker.setPosition(newPos);
+        map.setCenter(newPos);
+      }
+
+      fetch("/api/location", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-session-id": sessionId
+        },
+        body: JSON.stringify({ lat, lng, accuracy })
+      });
+    },
+    err => {
+      alert("لازم تسمح بمشاركة الموقع بدقة (Precise Location)");
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 0
+    }
+  );
+}
+</script>
+
+<script async
+  src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY">
+</script>
+
+</body>
+</html>
+>>>>>>> 8961501 (Add history tracking + live dashboard)

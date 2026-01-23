@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="ar">
 <head>
@@ -69,3 +70,94 @@ function updateUsers() {
 
 </body>
 </html>
+=======
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <title>Live Users Dashboard</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: Arial;
+      text-align: center;
+    }
+    #map {
+      width: 100%;
+      height: 90vh;
+    }
+  </style>
+</head>
+<body>
+
+<h3>🛰️ Live Users Map</h3>
+<div id="map"></div>
+
+<script>
+let map;
+const markers = {};
+const polylines = {};
+
+function initMap() {
+  console.log("Dashboard map initialized");
+
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: { lat: 0, lng: 0 },
+    zoom: 2,
+    mapTypeId: "roadmap"
+  });
+
+  setInterval(updateUsers, 2000);
+}
+
+function updateUsers() {
+  fetch("/api/sessions")
+    .then(res => res.json())
+    .then(data => {
+      Object.keys(data).forEach(id => {
+        const session = data[id];
+        const lastPos = { lat: session.last.lat, lng: session.last.lng };
+
+        // Marker لكل مستخدم
+        if (!markers[id]) {
+          markers[id] = new google.maps.Marker({
+            position: lastPos,
+            map,
+            label: "👤"
+          });
+        } else {
+          markers[id].setPosition(lastPos);
+        }
+
+        // Path (History) لكل مستخدم
+        const path = session.history.map(p => ({
+          lat: p.lat,
+          lng: p.lng
+        }));
+
+        if (!polylines[id]) {
+          polylines[id] = new google.maps.Polyline({
+            path,
+            map,
+            strokeColor: "#FF0000",
+            strokeOpacity: 0.8,
+            strokeWeight: 2
+          });
+        } else {
+          polylines[id].setPath(path);
+        }
+      });
+    })
+    .catch(err => console.error(err));
+}
+</script>
+
+<script async
+  src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap">
+</script>
+
+</body>
+</html>
+>>>>>>> 8961501 (Add history tracking + live dashboard)
