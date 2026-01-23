@@ -4,17 +4,14 @@ const path = require("path");
 const app = express();
 app.use(express.json());
 
-// serve frontend
 app.use(express.static(__dirname));
 
-// API
 app.post("/api/location", (req, res) => {
   const { lat, lng, accuracy } = req.body;
   const maps = `https://www.google.com/maps?q=${lat},${lng}`;
   res.json({ maps });
 });
 
-// fallback (FIXED)
 app.use((req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
