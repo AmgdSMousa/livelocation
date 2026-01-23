@@ -7,30 +7,23 @@ app.use(express.static(__dirname));
 
 const sessions = {};
 
-// استقبال الموقع
 app.post("/api/location", (req, res) => {
   const { lat, lng, accuracy } = req.body;
   const id = req.headers["x-session-id"];
 
   if (id && lat && lng) {
-    sessions[id] = {
-      lat,
-      lng,
-      accuracy,
-      time: Date.now()
-    };
+    sessions[id] = { lat, lng, accuracy, time: Date.now() };
   }
 
   res.json({ ok: true });
 });
 
-// API للـ dashboard
 app.get("/api/sessions", (req, res) => {
   res.json(sessions);
 });
 
-// fallback
-app.get("*", (req, res) => {
+// ❗ فقط الصفحة الرئيسية
+app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
