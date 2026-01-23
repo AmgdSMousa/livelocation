@@ -3,36 +3,36 @@ const path = require("path");
 const app = express();
 
 app.use(express.json());
-app.use(express.static(__dirname)); // يخدم static files (html, css, js)
+app.use(express.static(__dirname));
 
 let sessions = {};
 
-// استقبال موقع جديد
+// استقبال الموقع
 app.post("/api/location", (req, res) => {
   const { lat, lng, accuracy } = req.body;
-  const sessionId = req.headers["x-session-id"];
-  if (sessionId && lat && lng) {
-    sessions[sessionId] = { lat, lng, accuracy, time: Date.now() };
+  const id = req.headers["x-session-id"];
+  if (id && lat && lng) {
+    sessions[id] = { lat, lng, accuracy, time: Date.now() };
   }
   res.json({ ok: true });
 });
 
-// API لقراءة كل المواقع
+// API لقراءة جميع الجلسات
 app.get("/api/sessions", (req, res) => {
   res.json(sessions);
 });
 
-// صفحة البداية
+// route للصفحة الرئيسية
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// صفحة الداشبورد
+// route للداشبورد
 app.get("/dashboard.html", (req, res) => {
   res.sendFile(path.join(__dirname, "dashboard.html"));
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log("Server running on port " + PORT);
+  console.log("Server running on", PORT);
 });
