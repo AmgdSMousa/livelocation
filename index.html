@@ -1,45 +1,68 @@
 <!DOCTYPE html>
 <html lang="ar">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Live Location</title>
+  <style>
+    body { font-family: Arial; text-align: center; }
+    #map { width: 100%; height: 400px; margin-top: 15px; }
+  </style>
 </head>
 <body>
 
-<h2>📍 مشاركة الموقع المباشر</h2>
+<h2>📍 الموقع المباشر</h2>
 <button onclick="start()">ابدأ مشاركة الموقع</button>
-<pre id="out"></pre>
+
+<div id="map"></div>
 
 <script>
+let map, marker, watchId;
+
+function initMap(lat, lng) {
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: { lat, lng },
+    zoom: 16
+  });
+
+  marker = new google.maps.Marker({
+    position: { lat, lng },
+    map: map
+  });
+}
+
 function start() {
   if (!navigator.geolocation) {
     alert("GPS غير مدعوم");
     return;
   }
 
-  navigator.geolocation.watchPosition(
+  watchId = navigator.geolocation.watchPosition(
     pos => {
-      const data = {
-        lat: pos.coords.latitude,
-        lng: pos.coords.longitude,
-        accuracy: pos.coords.accuracy
-      };
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
 
-      document.getElementById("out").textContent =
-        JSON.stringify(data, null, 2);
+      if (!map) {
+        initMap(lat, lng);
+      } else {
+        const newPos = { lat, lng };
+        marker.setPosition(newPos);
+        map.setCenter(newPos);
+      }
 
       fetch("/api/location", {
         method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(data)
-      })
-      .then(r => r.json())
-      .then(d => console.log("Google Maps:", d.maps));
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lat, lng })
+      });
     },
     err => alert(err.message),
     { enableHighAccuracy: true }
   );
 }
+</script>
+
+<script async
+  src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY">
 </script>
 
 </body>
