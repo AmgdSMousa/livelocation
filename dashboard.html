@@ -4,14 +4,19 @@
   <meta charset="UTF-8" />
   <title>Live Users Dashboard</title>
   <style>
-    body {
+    html, body {
+      height: 100%;
       margin: 0;
+      padding: 0;
       font-family: Arial;
+    }
+    h3 {
       text-align: center;
+      margin: 5px;
     }
     #map {
       width: 100%;
-      height: 95vh;
+      height: 90%;
     }
   </style>
 </head>
@@ -25,14 +30,16 @@ let map;
 const markers = {};
 
 function initMap() {
+  console.log("Map initialized");
+
   map = new google.maps.Map(document.getElementById("map"), {
-    zoom: 2,
     center: { lat: 0, lng: 0 },
-    mapTypeId: "roadmap"
+    zoom: 2
   });
+
+  setInterval(updateUsers, 2000);
 }
 
-// تحديث المستخدمين
 function updateUsers() {
   fetch("/api/sessions")
     .then(res => res.json())
@@ -44,21 +51,19 @@ function updateUsers() {
         if (!markers[id]) {
           markers[id] = new google.maps.Marker({
             position: pos,
-            map: map,
+            map,
             label: "👤"
           });
         } else {
           markers[id].setPosition(pos);
         }
       });
-    });
+    })
+    .catch(err => console.error(err));
 }
-
-// تحديث كل ثانيتين
-setInterval(updateUsers, 2000);
 </script>
 
-<script async
+<script async defer
   src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBGVJpgTsnmYt5YP18wvzaoxdmVoaIhEvs&callback=initMap">
 </script>
 
