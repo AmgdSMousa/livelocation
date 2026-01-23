@@ -1,12 +1,27 @@
 const express = require("express");
 const path = require("path");
-const app = express();
+const fs = require("fs");
 
+const app = express();
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// تخزين الجلسات والمسار
-const sessions = {};
+const DATA_FILE = path.join(__dirname, "data.json");
+
+// تحميل البيانات القديمة من الملف
+let sessions = {};
+if (fs.existsSync(DATA_FILE)) {
+  try {
+    sessions = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
+  } catch (e) {
+    sessions = {};
+  }
+}
+
+// حفظ البيانات على الديسك
+function saveData() {
+  fs.writeFileSync(DATA_FILE, JSON.stringify(sessions, null, 2));
+}
 
 // استقبال مواقع المستخدمين
 app.post("/api/location", (req, res) => {
@@ -18,7 +33,10 @@ app.post("/api/location", (req, res) => {
   }
 
   if (!sessions[id]) {
-    sessions[id] = { history: [] };
+    sessions[id] = {
+      createdAt: Date.now(),
+      history: []
+    };
   }
 
   const point = {
@@ -31,15 +49,16 @@ app.post("/api/location", (req, res) => {
   sessions[id].last = point;
   sessions[id].history.push(point);
 
-  // احتفظ بآخر 300 نقطة فقط
-  if (sessions[id].history.length > 300) {
+  // حد أقصى للنقاط
+  if (sessions[id].history.length > 500) {
     sessions[id].history.shift();
   }
 
+  saveData();
   res.json({ ok: true });
 });
 
-// API لجلب كل الجلسات
+// API لجلب كل الجلسات (قديمة + جديدة)
 app.get("/api/sessions", (req, res) => {
   res.json(sessions);
 });
@@ -53,16 +72,6 @@ app.get("/", (req, res) => {
 app.get("/dashboard.html", (req, res) => {
   res.sendFile(path.join(__dirname, "dashboard.html"));
 });
-
-// تنظيف الجلسات غير النشطة
-setInterval(() => {
-  const now = Date.now();
-  Object.keys(sessions).forEach(id => {
-    if (now - sessions[id].last.time > 5 * 60 * 1000) {
-      delete sessions[id];
-    }
-  });
-}, 60000);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
